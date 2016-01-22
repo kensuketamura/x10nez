@@ -143,7 +143,56 @@ example Statement when(exp) {}
 
 /* Expressions */
 Arguments                 = { '()' #Stub }
-Expression                = { 'exp' #Stub }
+Expression                =
+                            Literals
+                          / Primary
+                          / FieldAccess
+                          / MethodInvo
+                          / Assignment
+                          / UnaryExpression
+                          / NumericOperation
+                          / Identifier
+
+ClassName                 = Identifier
+Primary                   = { ("this" / $(ClassName) "." "this") #This }
+FieldAccess               = { (
+                            $(Primary) "." $(Identifier)
+                          / "super" "." $(Identifier)
+                          / $(ClassName) "." "super" $(Identifier)
+                          ) #FieldAccess }
+MethodInvo                = {(
+                            $(MethodName) _ $(TypeArguments)? _ "(" (_ $(ArgumentList) _)? ")"
+                          / $(Primary) "." $(Identifier) _ $(TypeArguments)? _ "(" (_ $(ArgumentList) _)? ")"
+                          / "super" "." $(Identifier) _ $(TypeArguments)? _ "(" (_ $(ArgumentList) _)? ")"
+                          / $(ClassName) "." "super" "." $(Identifier) _ $(TypeArguments)? _ "(" (_ $(ArgumentList) _)? ")"
+                          / $(Primary) _ $(TypeArguments)? _ "(" (_ $(ArgumentList) _)? ")"
+                          ) #Calls}
+
+ArgumentList              = { $(Expression) (_ "," _ $(Expression))* #List}
+MethodName                = $(FullyQualifiedName) "." $(Identifier) / $(Identifier)
+Assignment                = {(
+                            $(Primary) _ "(" _ $(ArgumentList)? _ ")" _ AsstOp _ $(Expression)
+                          / $(Identifier) _ "(" _ $(ArgumentList)? _ ")" _ AsstOp _ $(Expression)
+                          / $(LeftHandSide) _ AsstOp _ $(AssExp)
+                          ) #Assignment}
+LeftHandSide              = FieldAccess / Identifier
+AsstOp                    = ("=")
+                          / ("*=")
+                          / ("/=")
+                          / ("%=")
+                          / ("+=")
+                          / ("-=")
+                          / ("<<=")
+                          / (">>=")
+                          / (">>>=")
+                          / ("&=")
+                          / ("^=")
+                          / ("|=")
+UnaryExpression           = { $(Indentifer) "++" #Inc }
+                          / { $(Indentifer) "--" #Dec }
+                          / { "++" $(Indentifer) #PreInc }
+                          / { "--" $(Indentifer) #PreDec }
+NumericOperation          = { ($(Literal) / $(Indentifer)) _ "as" _ $(Type) _ #As}
 
 example Expression ID
 example Expression 1
@@ -374,4 +423,3 @@ KEYWORD                   = "abstract" / "as" / "assert" / "async" / "at"
 "!~"                      = '!~'
 "-<"                      = '-<'
 ">-"                      = '>-'
-
