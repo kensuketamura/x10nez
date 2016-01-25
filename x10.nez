@@ -144,14 +144,14 @@ example Statement when(exp) {}
 /* Expressions */
 Arguments                 = { '()' #Stub }
 Expression                =
-                            Literals
-                          / Primary
+                            Primary
                           / FieldAccess
                           / MethodInvo
                           / Assignment
                           / UnaryExpression
                           / NumericOperation
                           / Identifier
+                          / Literals
 
 ClassName                 = Identifier
 Primary                   = { ("this" / $(ClassName) "." "this") #This }
@@ -176,23 +176,25 @@ Assignment                = {(
                           / $(LeftHandSide) _ AsstOp _ $(AssExp)
                           ) #Assignment}
 LeftHandSide              = FieldAccess / Identifier
-AsstOp                    = ("=")
-                          / ("*=")
-                          / ("/=")
-                          / ("%=")
-                          / ("+=")
-                          / ("-=")
-                          / ("<<=")
-                          / (">>=")
-                          / (">>>=")
-                          / ("&=")
-                          / ("^=")
-                          / ("|=")
-UnaryExpression           = { $(Indentifer) "++" #Inc }
-                          / { $(Indentifer) "--" #Dec }
-                          / { "++" $(Indentifer) #PreInc }
-                          / { "--" $(Indentifer) #PreDec }
-NumericOperation          = { ($(Literal) / $(Indentifer)) _ "as" _ $(Type) _ #As}
+AsstOp                    = "="
+                          / "*="
+                          / "/="
+                          / "%="
+                          / "+="
+                          / "-="
+                          / "<<="
+                          / ">>="
+                          / ">>>="
+                          / "&="
+                          / "^="
+                          / "|="
+UnaryExpression           = { $(Identifier) "++" #Inc }
+                          / { $(Identifier) "--" #Dec }
+                          / { "++" $(Identifier) #PreInc }
+                          / { "--" $(Identifier) #PreDec }
+                          / { "+" $(Expression) #Plus }
+                          / { "-" $(Expression) #Minus }
+NumericOperation          = { $(Identifier / Literal) _ "as" _ $(Type) #As}
 
 example Expression ID
 example Expression 1
