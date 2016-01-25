@@ -143,33 +143,8 @@ example Statement when(exp) {}
 
 /* Expressions */
 Arguments                 = { '()' #Stub }
-Expression                =
-                            Primary
-                          / FieldAccess
-                          / MethodInvo
-                          / Assignment
-                          / UnaryExpression
-                          / NumericOperation
-                          / Identifier
-                          / Literals
-
-ClassName                 = Identifier
-Primary                   = { ("this" / $(ClassName) "." "this") #This }
-FieldAccess               = { (
-                            $(Primary) "." $(Identifier)
-                          / "super" "." $(Identifier)
-                          / $(ClassName) "." "super" $(Identifier)
-                          ) #FieldAccess }
-MethodInvo                = {(
-                            $(MethodName) _ $(TypeArguments)? _ "(" (_ $(ArgumentList) _)? ")"
-                          / $(Primary) "." $(Identifier) _ $(TypeArguments)? _ "(" (_ $(ArgumentList) _)? ")"
-                          / "super" "." $(Identifier) _ $(TypeArguments)? _ "(" (_ $(ArgumentList) _)? ")"
-                          / $(ClassName) "." "super" "." $(Identifier) _ $(TypeArguments)? _ "(" (_ $(ArgumentList) _)? ")"
-                          / $(Primary) _ $(TypeArguments)? _ "(" (_ $(ArgumentList) _)? ")"
-                          ) #Calls}
-
+Expression                = ConstantExpression
 ArgumentList              = { $(Expression) (_ "," _ $(Expression))* #List}
-MethodName                = $(FullyQualifiedName) "." $(Identifier) / $(Identifier)
 Assignment                = {(
                             $(Primary) _ "(" _ $(ArgumentList)? _ ")" _ AsstOp _ $(Expression)
                           / $(Identifier) _ "(" _ $(ArgumentList)? _ ")" _ AsstOp _ $(Expression)
@@ -188,15 +163,48 @@ AsstOp                    = "="
                           / "&="
                           / "^="
                           / "|="
-UnaryExpression           = { $(Identifier) "++" #Inc }
-                          / { $(Identifier) "--" #Dec }
-                          / { "++" $(Identifier) #PreInc }
-                          / { "--" $(Identifier) #PreDec }
-                          / { "+" $(Expression) #Plus }
-                          / { "-" $(Expression) #Minus }
-NumericOperation          = { $(Identifier / Literal) _ "as" _ $(Type) #As}
+ConstantExpression        = ConditionalExpression
+ConditionalExpression     = LogicalOrExpression {$cond "?" $then(Expression) ":" $else(LogicalOrExpression) #Conditional }*
+LogicalOrExpression       = LogicalAndExpression {$left "||" $right(LogicalAndExpression) #Or }*
+LogicalAndExpression      = EqualityExpression {$left "&&" $right(EqualityExpression) #And }*
+EqualityExpression        = RelationalExpression {$left ("==" #Equals / "!=" #NotEquals) $right(RelationalExpression) }*
+relationalOperator        = "<=" #LessThanEquals
+                          / ">=" #GreaterThanEquals
+                          / "<" #LessThan
+                          / ">" #GreaterThan
+RelationalExpression      = ShiftExpression {$left relationalOperator $right(ShiftExpression) / "instanceof" $right(Type) #InstanceOf }*
+ShiftExpression           = AdditiveExpression {$left ("<<" #LeftShift / ">>" #ArithmeticRightShift / ">>>" #LogicalRightShift) $right(AdditiveExpression) }*
+AdditiveExpression        = MultiplicativeExpression {$left ("+" #Add / "-" #Sub) $right(MultiplicativeExpression) }*
+MultiplicativeExpression  = CastNewExpression {$left ("*" #Mul / "/" #Div / "%" #Mod) $right(CastNewExpression) }*
+CastNewExpression         = NumericOperation / UnaryExpression
+NumericOperation          = { $(Identifier / Literal) _ "as" _ $(NumericType) #As}
+UnaryExpression           = PostfixExpression
+                          / { $expr(UnaryExpression) "++" #Inc }
+                          / { $expr(UnaryExpression) "--" #Dec }
+                          / { "++" $expr(UnaryExpression) #PreInc }
+                          / { "--" $expr(UnaryExpression) #PreDec }
+                          / { "+" $expr(CastNewExpression) #Plus }
+                          / { "-" $expr(CastNewExpression) #Minus }
+                          / { "~" $expr(CastNewExpression) #BitwiseComplement }
+                          / { "!" $expr(CastNewExpression) #LogicalNot }
+PostfixExpression         = MethodInvo / FieldAccess / Primary / Identifier / Literal
+Primary                   = { ("this" / $(ClassName) "." "this") #This }
+FieldAccess               = { (
+                            $(Primary) "." $(Identifier)
+                          / "super" "." $(Identifier)
+                          / $(ClassName) "." "super" $(Identifier)
+                          ) #FieldAccess }
+ClassName                 = Identifier
+MethodInvo                = {(
+                            $(MethodName) _ $(TypeArguments _)? "(" (_ $(ArgumentList))? _ ")"
+                          / $(Primary) "." $(Identifier) _ $(TypeArguments _)? "(" (_ $(ArgumentList))? _ ")"
+                          / "super" "." $(Identifier) _ $(TypeArguments _)? "(" (_ $(ArgumentList))? _ ")"
+                          / $(ClassName) "." "super" "." $(Identifier) _ $(TypeArguments _)? "(" (_ $(ArgumentList))? _ ")"
+                          / $(Primary) _ $(TypeArguments _)? "(" (_ $(ArgumentList))? _ ")"
+                          ) #Calls}
+MethodName                = FullyQualifiedName "." Identifier / Identifier
 
-example Expression ID
+example PostfixExpression ID
 example Expression 1
 example Expression this
 example Expression super.ID
