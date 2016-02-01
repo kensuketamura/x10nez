@@ -157,6 +157,7 @@ Arguments                 = { '()' #Stub }
 StatementExpressionList   = { 'exp++' #Stub }
 StatementExpression       = { 'exp++' #Stub }
 Expression                = Assignment
+                          / {Type _ ("<:" #Subtyping / ":>" #Subtyped) Type}
 ArgumentList              = { $(Expression) (_ "," _ $(Expression))* #List}
 Assignment                = {($left(PrimaryExpression / Identifier) _ "(" _ $(ArgumentList)? _ ")" / $left(LeftHandSide)) _ AsstOp _ $right(Expression)}
                           / ConstantExpression
@@ -174,7 +175,7 @@ AsstOp                    = "=" #Assign
                           / "^=" #AssignBitwiseXOr
                           / "|=" #AssignBitwiseXOr
 ConstantExpression        = ConditionalExpression
-ConditionalExpression     = LogicalOrExpression {$cond _ "?" $then(Expression) _ ":" _ $else(LogicalOrExpression) #Conditional }*
+ConditionalExpression     = LogicalOrExpression {$cond _ "?" _ $then(Expression) _ ":" _ $else(LogicalOrExpression) #Conditional }*
 LogicalOrExpression       = LogicalAndExpression {$left _ "||" _ $right(LogicalAndExpression) #Or }*
 LogicalAndExpression      = EqualityExpression {$left _ "&&" _ $right(EqualityExpression) #And }*
 EqualityExpression        = RelationalExpression {$left _ ("==" #Equals / "!=" #NotEquals) _ $right(RelationalExpression) }*
@@ -199,14 +200,20 @@ UnaryExpression           = PostfixExpression
                           / { "-" $expr(CastNewExpression) #Minus }
                           / { "~" $expr(CastNewExpression) #BitwiseComplement }
                           / { "!" $expr(CastNewExpression) #LogicalNot }
-PostfixExpression         = PrimaryExpression "." $(addMethodInvo / addFieldAccess / Identifier / Literal) {$expr ("++" #Inc / "--" #Dec) }*
+                          / { "new" _ $name(Identifier) $(_ TypeArguments)? _ $({ "(" _ (ArgumentList _)? ")" #List }) $(_ ClassBody)? #New}
+                          / { "at" "(" "this" ")" _ Identifier #At }
+PostfixExpression         = PrimaryExpression {$expr addInstanceCreation / addMethodInvo / addFieldAccess / addInc / addDec}*
 PrimaryExpression         = { ("this" / $(ClassName) "." "this") #This }
                           / "super"{#Super}
                           / "(" _ Expression _ ")"
-                          / ClassName
+                          / "["_ ArgumentList _ "]"
                           / Identifier
                           / Literal
-addMethodInvo             =
+addInc                    = "++" #Inc
+addDec                    = "--" #Dec
+addMethodInvo             = _ $(TypeArguments _)? "(" $(_ ArgumentList)? _ ")" #Calls
+addField                  = "." $(Identifier) !'(' #Field
+addInstanceCreation       = "." "new" _ $(Identifier) $(_ TypeArguments)? _ $({ "(" _ (ArgumentList _)? ")" #List }) $(_ ClassBody)? #InstanceCreation
 FieldAccess               = { (
                             $(PrimaryExpression) "." $(Identifier)
                           / "super" "." $(Identifier)
@@ -257,7 +264,6 @@ example Expression new ID()
 example Expression ID.new ID()
 example Expression new ID() {}
 example Expression [1, 1, 1]
-example Expression (ID : Int) => @A {}
 example Expression at(this) ID
 
 
