@@ -28,7 +28,7 @@ PropertyMethodDeclaration = { 'x() {}' #Stub }
 FieldDeclaration          = { 'x:Int;' #Stub }
 LocalVariableDeclaration  = { 'var x = 1' #Stub }
 Formals                   = { '(ID : Int)' #Stub }
-Formal                    = { '(ID : Int)' #Stub }
+Formal                    = { 'ID : Int' #Stub }
 LoopIndex                 = { 'li' #Stub }
 
 Guard                     = { '{}' #Stub }
@@ -60,16 +60,16 @@ example PropertyMethodDeclaration '''
 property ID(ID : Int) = exp;
 '''
 example FieldDeclaration '''
-private var ID : Int = 1;
+private var ID : Int = exp;
 '''
 example LocalVariableDeclaration '''
-var ID : Int = 1;
+var ID : Int = exp
 '''
 example LocalVariableDeclaration '''
-val ID = 1;
+val ID = exp
 '''
 example LocalVariableDeclaration '''
-var ID : Int;
+var ID : Int
 '''
 
 
@@ -152,10 +152,11 @@ example Statement when(exp) {}
 
 
 /* Expressions */
-Arguments                 = { '()' #Stub }
+Arguments                 = { "(" _ ArgumentList _ ")" #Arguments }
 
-StatementExpressionList   = { 'exp++' #Stub }
-StatementExpression       = { 'exp++' #Stub }
+StatementExpressionList   = { StatementExpression _ ";" #StatementExpressionList }
+StatementExpression       = Assignment
+                          / UnaryExpression
 Expression                = Assignment
                           / {Type _ ("<:" #Subtyping / ":>" #Subtyped) Type}
 ArgumentList              = { $(Expression) (_ "," _ $(Expression))* #List}
@@ -200,7 +201,7 @@ UnaryExpression           = PostfixExpression
                           / { "-" $expr(CastNewExpression) #Minus }
                           / { "~" $expr(CastNewExpression) #BitwiseComplement }
                           / { "!" $expr(CastNewExpression) #LogicalNot }
-                          / { "new" _ $name(Identifier) $(_ TypeArguments)? _ $({ "(" _ (ArgumentList _)? ")" #List }) $(_ ClassBody)? #New}
+                          / { "new" _ ($name(Identifier) / $type(Type)) $(_ TypeArguments)? _ $({ "(" _ (ArgumentList _)? ")" #List }) $(_ ClassBody)? #New}
                           / { "at" "(" "this" ")" _ Identifier #At }
 PostfixExpression         = PrimaryExpression {$expr addInstanceCreation / addMethodInvo / addFieldAccess / addInc / addDec}*
 PrimaryExpression         = { ("this" / $(ClassName) "." "this") #This }
@@ -260,9 +261,9 @@ example Expression ID == 1
 example Expression Int == Int
 example Expression ID instanceof Int
 example Expression (ID != 1) ? ID : ID
-example Expression new ID()
+example Expression new Int()
 example Expression ID.new ID()
-example Expression new ID() {}
+example Expression new Int() {}
 example Expression [1, 1, 1]
 example Expression at(this) ID
 
