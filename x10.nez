@@ -228,7 +228,7 @@ example Expression ID
 example Expression 1
 example Expression this
 example Expression super.ID
-example PostfixExpression ID.ID()
+example Expression ID.ID(1,1)
 example Expression ID += 1
 example Expression ID as Int
 example Expression -ID
