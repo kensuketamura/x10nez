@@ -154,7 +154,7 @@ example Statement when(exp) {}
 /* Expressions */
 Arguments                 = { "(" (_ ArgumentList)? _ ")" #Arguments }
 
-StatementExpressionList   = { StatementExpression _ ";" #StatementExpressionList }
+StatementExpressionList   = { $(StatementExpression) _ ";" (_ $(StatementExpression) _ ";")* #StatementExpressionList }
 StatementExpression       = Assignment
                           / UnaryExpression
 Expression                = Assignment
@@ -208,6 +208,7 @@ PrimaryExpression         = { ("this" / $(ClassName) "." "this") #This }
                           / {"super" #Super}
                           / "(" _ Expression _ ")"
                           / {"["_ (addArgumentExpressionList _ )? "]" #Array}
+                          / ClosureExp
                           / Identifier
                           / Literal
 addInc                    = "++" #Inc
@@ -223,6 +224,9 @@ FieldAccess               = { (
                           ) #FieldAccess }
 ClassName                 = Identifier
 MethodName                = {$(FullyQualifiedName) "." $(Identifier) #Field} / Identifier
+ClosureExp                = { $(Formals) _ $(Guard)? _ $(HasResultType)? _ "=>" _ ClosureBody #Closure}
+ClosureBody               = $(Expression)
+                          / $(Annotations)? _ $(Block)
 
 example Expression ID
 example Expression 1
@@ -259,6 +263,7 @@ example Expression new Int()
 example Expression ID.new ID()
 example Expression new Int() {}
 example Expression [1, 1, 1]
+example Expression (ID : Int) => @A {}
 example Expression at(this) ID
 
 
