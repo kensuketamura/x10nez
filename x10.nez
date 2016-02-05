@@ -154,7 +154,7 @@ example Statement when(exp) {}
 /* Expressions */
 Arguments                 = { "(" (_ ArgumentList)? _ ")" #Arguments }
 
-StatementExpressionList   = { $(StatementExpression) _ ";" (_ $(StatementExpression) _ ";")* #StatementExpressionList }
+StatementExpressionList   = { $(StatementExpression)  (_ "," _ $(StatementExpression))* #StatementExpressionList }
 StatementExpression       = Assignment
                           / UnaryExpression
 Expression                = Assignment
